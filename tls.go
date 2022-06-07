@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 )
 
+// TLS13Config returns *tls.Config that only supports TLS 1.3 and does not
+// enforce client side authentication.
 func TLS13Config() *tls.Config {
 	return &tls.Config{
 		MaxVersion:               tls.VersionTLS13,
@@ -16,6 +18,8 @@ func TLS13Config() *tls.Config {
 	}
 }
 
+// MutualTLS13Config returns *tls.Config that supports mTLS 1.3 with
+// verification via the specified certificate authority.
 func MutualTLS13Config(caCertPool *x509.CertPool) *tls.Config {
 	return &tls.Config{
 		ClientAuth:               tls.RequireAndVerifyClientCert,
@@ -27,6 +31,7 @@ func MutualTLS13Config(caCertPool *x509.CertPool) *tls.Config {
 	}
 }
 
+// TLS13SecureCipherList returns a slice of TLS 1.3 cipher suites.
 func TLS13SecureCipherList() []uint16 {
 	return []uint16{
 		tls.TLS_AES_128_GCM_SHA256,
@@ -35,6 +40,7 @@ func TLS13SecureCipherList() []uint16 {
 	}
 }
 
+// TLS12Config returns *tls.Config with TLS 1.2 settings.
 func TLS12Config() *tls.Config {
 	return &tls.Config{
 		MaxVersion:               tls.VersionTLS13,
@@ -44,6 +50,8 @@ func TLS12Config() *tls.Config {
 	}
 }
 
+// MutualTLS12Config returns *tls.Config that supports mTLS 1.2 with
+// verification via the specified certificate authority.
 func MutualTLS12Config(caCertPool *x509.CertPool) *tls.Config {
 	return &tls.Config{
 		ClientAuth:               tls.RequireAndVerifyClientCert,
@@ -55,6 +63,7 @@ func MutualTLS12Config(caCertPool *x509.CertPool) *tls.Config {
 	}
 }
 
+// TLS12SecureCipherList returns a slice of TLS 1.2 cipher suites.
 func TLS12SecureCipherList() []uint16 {
 	return []uint16{
 		tls.TLS_AES_128_GCM_SHA256,
@@ -69,6 +78,9 @@ func TLS12SecureCipherList() []uint16 {
 	}
 }
 
+// LoadCACerts parses cacertFile for cert files and adds them to a CertPool
+// caCertPool, returning caCertPool with nil error if successful.
+// Else, return nil CertPool and the error encountered.
 func LoadCACerts(cacertFile string) (*x509.CertPool, error) {
 	caCert, err := ioutil.ReadFile(cacertFile)
 	if err != nil {
