@@ -2,12 +2,13 @@ package web
 
 import (
 	"fmt"
+	"net"
 	"strings"
 )
 
-// ServerAddress encapsulates listening address of the http server. This
+// Address encapsulates listening address of the http server. This
 // structure implements the net.Addr interface.
-type ServerAddress struct {
+type Address struct {
 	network string
 	address string
 }
@@ -19,8 +20,8 @@ type ServerAddress struct {
 // * 127.0.0.1:7777
 // If the network is not specified in the string, it defaults to tcp and
 // uses the rest of the string as the tcp address.
-func NewAddress(address string) *ServerAddress {
-	addr := &ServerAddress{}
+func NewAddress(address string) *Address {
+	addr := &Address{}
 	s := strings.Split(address, "://")
 
 	if len(s) > 1 {
@@ -36,31 +37,40 @@ func NewAddress(address string) *ServerAddress {
 }
 
 // Network returns the network of this server address. For example: tcp, unix.
-func (s *ServerAddress) Network() string {
+func (s *Address) Network() string {
 	return s.network
 }
 
 // String returns address specific to the network. For example: 127.0.0.1:6666
 // or /var/run/server.sock.
-func (s *ServerAddress) String() string {
+func (s *Address) String() string {
 	return s.address
 }
 
 // Format returns a fully qualified address string as described in the NewAddress.
-func (s *ServerAddress) Format() string {
+func (s *Address) Format() string {
 	return fmt.Sprintf("%s://%s", s.network, s.address)
 }
 
 // MarshalText returns the address in text form.
-func (s *ServerAddress) MarshalText() ([]byte, error) {
+func (s *Address) MarshalText() ([]byte, error) {
 	return []byte(s.Format()), nil
 }
 
 // UnmarshalText parses the address in text form into an address.
-func (s *ServerAddress) UnmarshalText(t []byte) error {
+func (s *Address) UnmarshalText(t []byte) error {
 	n := NewAddress(string(t))
 	s.network = n.network
 	s.address = n.address
 
 	return nil
+}
+
+func (s *Address) Listener() (net.Listener, error) {
+	l, e := net.Listen(s.network, s.address)
+	if e != nil {
+		return nil, fmt.Errorf("net listen error: %w", e)
+	}
+
+	return l, nil
 }
