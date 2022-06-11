@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"net"
 )
 
 // TLS13Config returns *tls.Config that only supports TLS 1.3 and does not
@@ -91,4 +92,54 @@ func LoadCACerts(cacertFile string) (*x509.CertPool, error) {
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	return caCertPool, nil
+}
+
+type TLS struct {
+	CACertFile  string `json:"caCertFile"`
+	CertFile    string `json:"certFile"`
+	KeyFile     string `json:"keyFile"`
+	EnableTLS12 bool   `json:"tls12,omitempty"`
+}
+
+func (tc *TLS) Listener(addr *Address) (net.Listener, error) {
+	if tc == nil {
+		return addr.Listener()
+	}
+
+	cert, err := tls.LoadX509KeyPair(tc.CertFile, tc.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("cert load error: %w", err)
+	}
+
+	var cfg *tls.Config
+
+	if tc.CACertFile != "" {
+		// CA cert is present means we should do MTLS
+		caCerts, err := LoadCACerts(tc.CACertFile)
+		if err != nil {
+			return nil, err
+		}
+
+		if tc.EnableTLS12 {
+			cfg = MutualTLS12Config(caCerts)
+		} else {
+			cfg = MutualTLS13Config(caCerts)
+		}
+	} else {
+		if tc.EnableTLS12 {
+			cfg = TLS12Config()
+		} else {
+			cfg = TLS13Config()
+		}
+	}
+
+	// Set the cert
+	cfg.Certificates = []tls.Certificate{cert}
+
+	l, err := addr.Listener()
+	if err != nil {
+		return nil, err
+	}
+
+	return tls.NewListener(l, cfg), nil
 }
