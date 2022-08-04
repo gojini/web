@@ -95,7 +95,7 @@ func LoadCACerts(cacertFile string) (*x509.CertPool, error) {
 }
 
 type TLS struct {
-	CACertFile  string `json:"caCertFile"`
+	CACertFile  string `json:"caCertFile,omitempty"`
 	CertFile    string `json:"certFile"`
 	KeyFile     string `json:"keyFile"`
 	EnableTLS12 bool   `json:"tls12,omitempty"`
